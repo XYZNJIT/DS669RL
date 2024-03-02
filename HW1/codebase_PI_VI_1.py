@@ -43,7 +43,7 @@ def interpret_policy(policy, nrow, ncol):
     return re_policy
 
 
-def policy_evaluation(P, nS, policy, gamma=0.9, epsilon=1e-3):
+def policy_evaluation(P, nS, policy, gamma=0.9, epsilon=1e-3, init_value=0.0):
     """
     Evaluate the value function from a given policy.
     :param P: transition probability
@@ -60,7 +60,8 @@ def policy_evaluation(P, nS, policy, gamma=0.9, epsilon=1e-3):
     # Initialize value function as all zeros
     # Modify the following line for initialization optimization in question 5.(a)
     # Hint: Please add a new parameter for the policy_iteration function and use this parameter to control the initialization.
-    value_function = np.zeros(nS)
+    # value_function = np.zeros(nS)
+    value_function = np.ones(nS) * init_value
 
     ############################
     # evaluation_steps: the number of steps needed for policy evaluation in each iteration
@@ -83,7 +84,6 @@ def policy_evaluation(P, nS, policy, gamma=0.9, epsilon=1e-3):
             delta = np.linalg.norm([delta, abs(old_value - value_function[state])], np.inf)
         evaluation_steps += 1
 
-        
     ############################
     return value_function, evaluation_steps
 
@@ -118,7 +118,7 @@ def policy_improvement(P, nS, nA, value_function, gamma=0.9):
     return new_policy
 
 
-def policy_iteration(P, nS, nA, init_action=-1, gamma=0.9, epsilon=1e-3):
+def policy_iteration(P, nS, nA, init_action=-1, gamma=0.9, epsilon=1e-3, init_value=0.0):
     """
     Runs policy iteration. Please call the policy_evaluation() and policy_improvement() methods to implement this method.
     :param P: transition probability
@@ -153,12 +153,15 @@ def policy_iteration(P, nS, nA, init_action=-1, gamma=0.9, epsilon=1e-3):
     # Please call the policy_evaluation() and policy_improvement() to update the policy. #
     # Remember to update the iteration and policy_prev. #
     # Please use while loop to finish this part. #
+    total_evaluation_steps = 0
     
     terminate = False
     while not terminate:
-        value_function, _ = policy_evaluation(P, nS, policy_prev, gamma, epsilon)
+        value_function, evaluation_steps = policy_evaluation(P, nS, policy_prev, gamma, epsilon, init_value)
         policy = policy_improvement(P, nS, nA, value_function, gamma)
         iteration += 1
+        total_evaluation_steps += evaluation_steps
+        print(f"For {iteration}th iteration, the evaluation steps are: {evaluation_steps}.")
         if np.array_equal(policy, policy_prev):
             terminate = True
         else:
@@ -166,6 +169,7 @@ def policy_iteration(P, nS, nA, init_action=-1, gamma=0.9, epsilon=1e-3):
 
     ############################
 
+    print(f"The total number of evaluation steps is {total_evaluation_steps}.")
     print(f"There are {iteration} iterations in policy iteration.")
     return value_function, policy, iteration
 
@@ -212,6 +216,7 @@ def value_iteration(P, nS, nA, init_value=0.0, gamma=0.9, epsilon=1e-3):
             delta = np.linalg.norm([delta, np.abs(max_value - value_function[state])], np.inf)
             value_function[state] = max_value
         iteration += 1
+        # print(f"Value iteration: This is the {iteration}th iteration.")
         if delta < epsilon:
             break
 
@@ -300,7 +305,7 @@ if __name__ == "__main__":
             # Run policy iteration
             print("---- Policy Iteration----\n")
             value, policy, iteration = policy_iteration(
-                env.P, env.nS, env.nA, init_action=args.init_action, gamma=args.gamma, epsilon=args.epsilon)
+                env.P, env.nS, env.nA, init_action=args.init_action, gamma=args.gamma, epsilon=args.epsilon, init_value=args.init_value)
 
         elif args.method == 'value_iteration':
             # Run value iteration
